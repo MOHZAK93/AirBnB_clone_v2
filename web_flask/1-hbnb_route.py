@@ -11,6 +11,7 @@ def hello():
     """Start a basic Flask web app"""
     return 'Hello HBNB!'
 
+
 @app.route('/hbnb', strict_slashes=False)
 def hbnb():
     """Adds a specific route /hbnb"""
