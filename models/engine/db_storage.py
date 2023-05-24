@@ -19,18 +19,9 @@ db = os.getenv('HBNB_MYSQL_DB')
 env = os.getenv('HBNB_ENV')
 
 
-classes = {
-        "User": User,
-        "Place": Place,
-        "State": State,
-        "City": City,
-        "Amenity": Amenity,
-        "Review": Review,
-}
-
-
 class DBStorage:
     """Defines the class DBStorage"""
+    __classes = [State, City, User, Place, Review, Amenity]
     __engine = None
     __session = None
 
@@ -39,16 +30,22 @@ class DBStorage:
         self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.format(
             user, pwd, host, db), pool_pre_ping=True)
         if env == 'test':
-            Base.metadata.drop_all()
+            Base.MetaData.drop_all()
 
     def all(self, cls=None):
         """Returns a dictionary of objects"""
         all_objs = {}
-        for cl in classes:
-            if not cls or cls is classes[cl]:
-                for obj in self.__session.query(classes[cl]).all():
-                    key = '{}.{}'.format(obj.__class__.__name__, obj.id)
-                    all_objs[key] = obj
+        for cls in self.__classes:
+            result = DBStorage.__session.query(cls)
+            for row in result:
+                key = '{}.{}'.format(row.__class__.__name__, row.id)
+                all_objs[key] = row
+        elif cls is None:
+            for cl in self.__classes:
+                result = DBStorage.__session.query(cl)
+                for row in result:
+                    key = "{}.{}".format(row.__class__.__name__, row.id)
+                    all_dict[key] = row
         return all_objs
 
     def new(self, obj):
