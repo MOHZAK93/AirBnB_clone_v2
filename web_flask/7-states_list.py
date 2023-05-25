@@ -10,16 +10,16 @@ app = Flask(__name__)
 
 
 @app.teardown_appcontext
-def remove_storage_session(exc):
+def appcontext_teardown(self):
     """use storage for fetching data from the storage engine"""
     storage.close()
 
 
 @app.route('/states_list', strict_slashes=False)
-def states_list():
+def state_info():
     """Display a HTML page inside the tag BODY"""
-    states = storage.all(State)
-    render_template('7-states_list.html', states=states)
+    return render_template('7-states_list.html',
+                           states=storage.all(State))
 
 
 if __name__ == '__main__':
