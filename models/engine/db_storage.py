@@ -12,6 +12,16 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 import os
 
 
+classes = {
+    "User": User,
+    "Place": Place,
+    "State": State,
+    "City": City,
+    "Amenity": Amenity,
+    "Review": Review,
+}
+
+
 user = os.getenv('HBNB_MYSQL_USER')
 pwd = os.getenv('HBNB_MYSQL_PWD')
 host = os.getenv('HBNB_MYSQL_HOST')
@@ -21,7 +31,6 @@ env = os.getenv('HBNB_ENV')
 
 class DBStorage:
     """Defines the class DBStorage"""
-    __classes = [State, City, User, Place, Review, Amenity]
     __engine = None
     __session = None
 
@@ -33,19 +42,13 @@ class DBStorage:
             Base.MetaData.drop_all()
 
     def all(self, cls=None):
-        """Returns a dictionary of objects"""
+        """Query all objects of the current database session by class name"""
         all_objs = {}
-        for cls in self.__classes:
-            result = DBStorage.__session.query(cls)
-            for row in result:
-                key = '{}.{}'.format(row.__class__.__name__, row.id)
-                all_objs[key] = row
-        elif cls is None:
-            for cl in self.__classes:
-                result = DBStorage.__session.query(cl)
-                for row in result:
-                    key = "{}.{}".format(row.__class__.__name__, row.id)
-                    all_dict[key] = row
+        for kcls in classes:
+            if not cls or cls is classes[kcls]:
+                for obj in self.__session.query(classes[kcls]).all():
+                    key = "{}.{}".format(obj.__class__.__name__, obj.id)
+                    all_objs[key] = obj
         return all_objs
 
     def new(self, obj):
