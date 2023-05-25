@@ -12,16 +12,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 import os
 
 
-classes = {
-    "User": User,
-    "Place": Place,
-    "State": State,
-    "City": City,
-    "Amenity": Amenity,
-    "Review": Review,
-}
-
-
 user = os.getenv('HBNB_MYSQL_USER')
 pwd = os.getenv('HBNB_MYSQL_PWD')
 host = os.getenv('HBNB_MYSQL_HOST')
@@ -31,6 +21,7 @@ env = os.getenv('HBNB_ENV')
 
 class DBStorage:
     """Defines the class DBStorage"""
+    __classes = [State, City, User, Place, Review, Amenity]
     __engine = None
     __session = None
 
@@ -44,32 +35,39 @@ class DBStorage:
     def all(self, cls=None):
         """Query all objects of the current database session by class name"""
         all_objs = {}
-        for kcls in classes:
-            if not cls or cls is classes[kcls]:
-                for obj in self.__session.query(classes[kcls]).all():
-                    key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        if cls in self.__classes:
+            result = DBStorage.__session.query(cls)
+            for obj in result:
+                key = "{}.{}".format(obj.__class__.__name__, obj.id)
+                all_objs[key] = obj
+        elif cls is None:
+            for cl in self.__classes:
+                result = DBStorage.__session.query(cl)
+                for obj in result:
+                    key = '{}.{}'.format(obj.__class__.__name__, obj.id)
                     all_objs[key] = obj
         return all_objs
 
     def new(self, obj):
         """Adds a new object to the current database"""
-        self.__session.add(obj)
+        DBStorage.__session.add(obj)
 
     def save(self):
         """Commits all changes to the current database"""
-        self.__session.commit()
+        DBStorage.__session.commit()
 
     def delete(self, obj=None):
         """Deletes a new object added to database"""
-        self.__session.delete(obj)
+        DBStorage.__session.delete(obj)
 
     def reload(self):
         """Create the current database session"""
         Base.metadata.create_all(self.__engine)
         session_factory = sessionmaker(bind=self.__engine,
                                        expire_on_commit=False)
-        self.__session = scoped_session(session_factory)
+        Session = scoped_session(session_factory)
+        DBStorage.__session = Session()
 
     def close(self):
         """Calls remove method"""
-        self.__session.close()
+        DBStorage.__session.close()
